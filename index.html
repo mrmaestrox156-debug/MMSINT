@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MMSINT | OSINT Engine</title>
+    <style>
+        /* ===== DESIGN APROVADO – NÃO ALTERAR ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg-deep: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glow-white: rgba(255, 255, 255, 0.5);
+            --glow-soft: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-white: #ffffff;
+            --input-bg: rgba(15, 15, 15, 0.8);
+            --hover-glow: 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+        body.light {
+            --bg-deep: #f8f9fa;
+            --glass-bg: rgba(0, 0, 0, 0.03);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glow-white: rgba(0, 0, 0, 0.2);
+            --glow-soft: rgba(0, 0, 0, 0.08);
+            --text-primary: #111111;
+            --text-secondary: #3a3a3a;
+            --accent-white: #1a1a1a;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --hover-glow: 0 0 12px rgba(0, 0, 0, 0.15);
+        }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, monospace;
+            transition: background 0.25s ease, color 0.25s ease;
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 1.8rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .glass-card:hover {
+            box-shadow: var(--hover-glow);
+        }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: 0.7rem 1.6rem;
+            border-radius: 2.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+        .btn:hover {
+            background: var(--text-primary);
+            color: var(--bg-deep);
+            border-color: var(--text-primary);
+            box-shadow: 0 0 14px var(--glow-white);
+        }
+        .input-field {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            padding: 0.8rem 1.2rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            border-color: var(--accent-white);
+            box-shadow: 0 0 8px var(--glow-soft);
+        }
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0s 0.6s;
+        }
+        .intro-text-simple {
+            font-size: 4rem;
+            font-weight: 600;
+            letter-spacing: normal;
+            background: linear-gradient(120deg, #fff, #ccc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            animation: gentleRise 1s ease;
+        }
+        @keyframes gentleRise {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .hide-intro {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0s 0.5s;
+        }
+        .login-wrapper {
+            max-width: 440px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .key-badge {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.35rem 1rem;
+            border-radius: 2rem;
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-top: 12px;
+            border-left: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+        }
+        .dashboard {
+            display: none;
+            animation: fadeSlide 0.45s ease;
+        }
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .header-premium {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.8rem;
+            padding: 0.6rem 1rem;
+            position: relative;
+        }
+        .menu-dots {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .menu-dots:hover {
+            background: var(--glass-border);
+            transform: scale(0.96);
+            box-shadow: 0 0 8px var(--glow-soft);
+        }
+        .center-logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .center-logo img {
+            height: 44px;
+            width: auto;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+        }
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        .search-module {
+            padding: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .module-icon {
+            width: 91px;
+            height: 91px;
+            object-fit: contain;
+            opacity: 0.9;
+            transition: transform 0.2s;
+            align-self: center;
+        }
+        .module-icon:hover {
+            transform: scale(1.02);
+        }
+        .module-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-top: -0.2rem;
+            border-left: 2px solid var(--glass-border);
+            padding-left: 0.8rem;
+        }
+        .data-area {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.8rem;
+            border-radius: 1.2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .data-area.visible {
+            display: flex;
+        }
+        .cache-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .cache-container.hidden-cache {
+            display: none !important;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--glass-border);
+            padding: 0.2rem 0;
+        }
+        .data-label {
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+        .data-value {
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: right;
+            word-break: break-word;
+        }
+        .data-value a {
+            color: var(--accent-white);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--glass-border);
+        }
+        .data-value a:hover {
+            color: #fff;
+            border-bottom-color: #fff;
+        }
+        .data-list {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .data-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        .data-list ul li {
+            text-align: left;
+            padding: 0.1rem 0;
+        }
+        .data-list ul li a {
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--glass-border);
+        }
+        .data-list ul li a:hover {
+            color: var(--accent-white);
+            border-bottom-color: var(--accent-white);
+        }
+        /* FORÇA A VISIBILIDADE DOS LINKS */
+        .data-value.data-list a {
+            display: block !important;
+            color: var(--text-primary) !important;
+            text-decoration: none !important;
+            padding: 5px 0 !important;
+            border-bottom: 1px solid var(--glass-border) !important;
+            pointer-events: auto !important;
+        }
+        .data-value.data-list {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+        }
+        .data-list ul {
+            display: block !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 10px 0 !important;
+        }
+        .data-list li a {
+            display: block !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+            padding: 8px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            margin-bottom: 5px !important;
+            border-radius: 4px !important;
+        }
+
+        .hook-placeholder {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            border-top: 1px dashed var(--glass-border);
+            margin-top: 0.3rem;
+            padding-top: 0.5rem;
+            text-align: center;
+            font-style: normal;
+        }
+        .footer-sticky {
+            margin-top: auto;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.75rem;
+            color: #6c6c6c;
+            border-top: 1px solid var(--glass-border);
+        }
+        .modal-root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .menu-modal-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(32px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            width: 280px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+        .menu-option {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 0.8rem;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 1rem;
+            transition: 0.2s;
+        }
+        .menu-option:hover {
+            background: var(--glass-border);
+        }
+        hr {
+            margin: 0.5rem 0;
+            border-color: var(--glass-border);
+        }
+        .search-module,
+        .glow-panel {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .search-module.visible,
+        .glow-panel.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (max-width: 680px) {
+            .app {
+                padding: 1rem;
+            }
+            .intro-text-simple {
+                font-size: 2.5rem;
+            }
+            .center-logo img {
+                height: 34px;
+            }
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- INTRO -->
+        <div id="introScreen" class="intro-overlay">
+            <div class="intro-text-simple">MMSINT</div>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="loginPanel" class="login-wrapper glass-card" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-weight: 500; letter-spacing: -0.3px;">access</h2>
+                <p style="color: var(--text-secondary); margin-top: 6px;">OSINT engine</p>
+            </div>
+            <form id="authForm">
+                <div style="margin-bottom: 1.2rem;">
+                    <input type="text" id="loginEmail" class="input-field" placeholder="username / email" required>
+                </div>
+                <div>
+                    <input type="password" id="loginPass" class="input-field" placeholder="password (decode sequence)" autocomplete="off">
+                    <div id="keyDisplay" class="key-badge">—</div>
+                    <div id="loginErrorMsg" style="color: #ff6b6b; font-size: 0.75rem; margin-top: 8px;"></div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1.8rem;">sign in</button>
+            </form>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboardMain" class="dashboard">
+            <div class="header-premium">
+                <button id="menuTrigger" class="menu-dots" aria-label="menu">⋮</button>
+                <div class="center-logo">
+                    <img src="https://i.postimg.cc/13zk3NzC/Novo-projeto-CF41ED2.png" alt="MMSINT">
+                </div>
+                <div style="width: 44px;"></div>
+            </div>
+
+            <div class="modules-grid" id="modulesGrid">
+                <!-- ======== NAME MODULE ======== -->
+                <div class="search-module glass-card" data-animate>
+                    <img class="module-icon" src="https://i.postimg.cc/DfXcm5VB/Novo-projeto-618-2F57210.png" alt="name icon">
+                    <h3>Name</h3>
+                    <input type="text" id="nameInput" class="input-field" placeholder="full name">
+                    <button class="btn search-action" data-module="name">search</button>
+                    <div class="module-description">Deep search across social media, public records and digital footprints.</div>
+                    <div id="name-data" class="data-area">
+                        <div id="name-cache1" class="cache-container">
+                            <div class="data-row"><span class="data-label">Social</span><span class="data-value data-list" id="name-social"></span></div>
+                        </div>
+                        <div id="name-cache2" class="cache-container">
+                            <div class="data-row"><span class="data-label">Identidade</span><span class="data-value" id="name-identity"></span></div>
+                        </div>
+                        <div id="name-cache3" class="cache-container">
+                            <div class="data-row"><span class="data-label">Deep Search</span><span class="data-value data-list" id="name-deep"></span></div>
+                        </div>
+                    </div>
+                    <div id="hook-name" class="hook-placeholder"><!-- Ponto de injeção de inteligência local (backend/Ollama) --></div>
+                </div>
+
+                <!-- ======== PHONE MODULE (REESTRUTURADO) ======== -->
+                <div class="search-module glass-card" data-animate>
+                    <img class="module-icon" src="https://i.postimg.cc/qvjsW5ns/Novo-projeto-618-5C7E331.png" alt="phone icon">
+                    <h3>Phone</h3>
+                    <input type="text" id="numberInput" class="input-field" placeholder="phone number">
+                    <button class="btn search-action" data-module="number">search</button>
+                    <div class="module-description">Carrier intelligence, geolocation hints, and global reputation scoring.</div>
+                    <div id="phone-data" class="data-area">
+                        <!-- CACHE 2: DADOS DETALHADOS (PAÍS, ESTADO, CIDADE, OPERADORA, TIPO, DDD, PREFIXO, MAPS) -->
+                        <div id="phone-cache2" class="cache-container">
+                            <div class="data-row"><span class="data-label">País</span><span class="data-value" id="phone-country"></span></div>
+                            <div class="data-row"><span class="data-label">Estado</span><span class="data-value" id="phone-state"></span></div>
+                            <div class="data-row"><span class="data-label">Cidade</span><span class="data-value" id="phone-city"></span></div>
+                            <div class="data-row"><span class="data-label">Operadora</span><span class="data-value" id="phone-carrier"></span></div>
+                            <div class="data-row"><span class="data-label">Tipo de linha</span><span class="data-value" id="phone-type"></span></div>
+                            <div class="data-row"><span class="data-label">DDD</span><span class="data-value" id="phone-ddd"></span></div>
+                            <div class="data-row"><span class="data-label">Prefixo</span><span class="data-value" id="phone-prefix"></span></div>
+                            <div class="data-row"><span class="data-label">Google Maps</span><span class="data-value" id="phone-maps"></span></div>
+                        </div>
+                        <!-- CACHE 1: LINKS DE BUSCA (PARTE INFERIOR) -->
+                        <div id="phone-cache1" class="cache-container">
+                            <div class="data-row"><span class="data-label">Search Links</span><span class="data-value data-list" id="phone-links"></span></div>
+                        </div>
+                        <!-- CACHE 3: PORTABILIDADE, DATA, SCORE (OCULTO) -->
+                        <div id="phone-cache3" class="cache-container">
+                            <div class="data-row"><span class="data-label">Status de Portabilidade</span><span class="data-value" id="phone-portability"></span></div>
+                            <div class="data-row"><span class="data-label">Data de Registro</span><span class="data-value" id="phone-regdate"></span></div>
+                            <div class="data-row"><span class="data-label">Score de Reputação</span><span class="data-value" id="phone-score"></span></div>
+                        </div>
+                    </div>
+                    <div id="hook-number" class="hook-placeholder"><!-- Ponto de injeção de inteligência local (backend/Ollama) --></div>
+                </div>
+
+                <!-- ======== ID/IP MODULE ======== -->
+                <div class="search-module glass-card" data-animate>
+                    <img class="module-icon" src="https://i.postimg.cc/LsWz8gxp/Novo-projeto-618-B42F161.png" alt="ip id icon">
+                    <h3>ID / IP</h3>
+                    <input type="text" id="ipInput" class="input-field" placeholder="IPv4 / identifier">
+                    <button class="btn search-action" data-module="idip">search</button>
+                    <div class="module-description">VPN/proxy detection, threat correlation, and domain intelligence.</div>
+                    <div id="ip-data" class="data-area">
+                        <div id="ip-cache1" class="cache-container">
+                            <div class="data-row"><span class="data-label">Provedor (ISP)</span><span class="data-value" id="ip-isp"></span></div>
+                            <div class="data-row"><span class="data-label">ASN</span><span class="data-value" id="ip-asn"></span></div>
+                            <div class="data-row"><span class="data-label">Geolocalização</span><span class="data-value" id="ip-geo"></span></div>
+                            <div class="data-row"><span class="data-label">Blacklists</span><span class="data-value" id="ip-blacklist"></span></div>
+                        </div>
+                        <div id="ip-cache2" class="cache-container"></div>
+                        <div id="ip-cache3" class="cache-container"></div>
+                    </div>
+                    <div id="hook-id-ip" class="hook-placeholder"><!-- Ponto de injeção de inteligência local (backend/Ollama) --></div>
+                </div>
+            </div>
+
+            <footer class="footer-sticky">
+                © copyright mrmaestrox | github: mrmaestrox | clone: mrmaestrox156-debug
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // ===============================================================
+        //  AUTENTICAÇÃO – MASTER KEY "MR" + CHARADA
+        // ===============================================================
+        let currentKeyNumbers = [];
+        let currentKeyString = "";
+
+        function generateKeySequence() {
+            const arr = [];
+            for (let i = 0; i < 5; i++) arr.push(Math.floor(Math.random() * 26));
+            return arr;
+        }
+
+        function numbersToLetters(nums) {
+            return nums.map(n => String.fromCharCode(65 + n)).join('');
+        }
+
+        function updateKeyUI() {
+            const keyDiv = document.getElementById('keyDisplay');
+            if (keyDiv) {
+                keyDiv.innerText = `seq: ${currentKeyNumbers.join(', ')}`;
+            }
+        }
+
+        function refreshChallenge() {
+            currentKeyNumbers = generateKeySequence();
+            currentKeyString = numbersToLetters(currentKeyNumbers);
+            updateKeyUI();
+            const errDiv = document.getElementById('loginErrorMsg');
+            if (errDiv) errDiv.innerText = '';
+        }
+
+        function validatePassword(input) {
+            const trimmed = input.trim().toUpperCase();
+            if (trimmed === 'MR') return true;
+            return trimmed === currentKeyString;
+        }
+
+        // ===============================================================
+        //  FLUXO DE TELAS
+        // ===============================================================
+        function showLogin() {
+            document.getElementById('dashboardMain').style.display = 'none';
+            document.getElementById('loginPanel').style.display = 'block';
+            refreshChallenge();
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('dashboardMain').style.display = 'block';
+            observeModules();
+        }
+
+        // ===============================================================
+        //  INTRO
+        // ===============================================================
+        function startIntro() {
+            const intro = document.getElementById('introScreen');
+            if (!intro) return;
+            setTimeout(() => {
+                intro.classList.add('hide-intro');
+                setTimeout(() => {
+                    intro.style.display = 'none';
+                    showLogin();
+                }, 550);
+            }, 1500);
+        }
+
+        // ===============================================================
+        //  LOGIN FORM
+        // ===============================================================
+        function setupAuth() {
+            const form = document.getElementById('authForm');
+            if (!form) return;
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const pwdField = document.getElementById('loginPass');
+                const entered = pwdField.value;
+                if (validatePassword(entered)) {
+                    showDashboard();
+                } else {
+                    const errorDiv = document.getElementById('loginErrorMsg');
+                    errorDiv.innerText = 'invalid decode (use A=0...Z=25) or Master Key (MR)';
+                    refreshChallenge();
+                    pwdField.value = '';
+                }
+            });
+        }
+
+        // ===============================================================
+        //  MENU (PT/EN, DARK/WHITE)
+        // ===============================================================
+        let currentLang = 'en';
+        let currentTheme = 'dark';
+
+        function applyLanguage() {
+            const texts = {
+                pt: {
+                    name: "Nome",
+                    phone: "Telefone",
+                    idip: "ID / IP",
+                    descName: "Busca profunda em redes sociais, registros públicos e pegadas digitais.",
+                    descPhone: "Inteligência de operadora, dicas de geolocalização e reputação global.",
+                    descIp: "Detecção de VPN/proxy, correlação de ameaças e inteligência de domínios."
+                },
+                en: {
+                    name: "Name",
+                    phone: "Phone",
+                    idip: "ID / IP",
+                    descName: "Deep search across social media, public records and digital footprints.",
+                    descPhone: "Carrier intelligence, geolocation hints, and global reputation scoring.",
+                    descIp: "VPN/proxy detection, threat correlation, and domain intelligence."
+                }
+            };
+            const t = texts[currentLang];
+            const titles = document.querySelectorAll('.search-module h3');
+            if (titles[0]) titles[0].innerText = t.name;
+            if (titles[1]) titles[1].innerText = t.phone;
+            if (titles[2]) titles[2].innerText = t.idip;
+            const descs = document.querySelectorAll('.module-description');
+            if (descs[0]) descs[0].innerText = t.descName;
+            if (descs[1]) descs[1].innerText = t.descPhone;
+            if (descs[2]) descs[2].innerText = t.descIp;
+        }
+
+        function setTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light');
+            } else {
+                document.body.classList.remove('light');
+            }
+            currentTheme = theme;
+        }
+
+        function toggleTheme() {
+            if (currentTheme === 'dark') {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
+        }
+
+        function showMenuModal() {
+            const existing = document.querySelector('.modal-root');
+            if (existing) existing.remove();
+
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal-root';
+            modalDiv.innerHTML = `
+                    <div class="menu-modal-card">
+                        <button class="menu-option" id="langToggleBtn">language: ${currentLang === 'pt' ? 'português' : 'english'}</button>
+                        <hr>
+                        <button class="menu-option" id="themeOptionBtn">theme: ${currentTheme === 'dark' ? 'dark' : 'light'}</button>
+                        <hr>
+                        <button class="menu-option" id="closeMenuBtn">close</button>
+                    </div>
+                `;
+            document.body.appendChild(modalDiv);
+
+            const langBtn = modalDiv.querySelector('#langToggleBtn');
+            const themeBtn = modalDiv.querySelector('#themeOptionBtn');
+            const closeBtn = modalDiv.querySelector('#closeMenuBtn');
+
+            langBtn.addEventListener('click', () => {
+                currentLang = currentLang === 'pt' ? 'en' : 'pt';
+                applyLanguage();
+                modalDiv.remove();
+                showMenuModal();
+            });
+            themeBtn.addEventListener('click', () => {
+                toggleTheme();
+                modalDiv.remove();
+                showMenuModal();
+            });
+            closeBtn.addEventListener('click', () => modalDiv.remove());
+            modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+        }
+
+        // ===============================================================
+        //  ENGINE OSINT – CACHES, VALIDAÇÃO, MASTER KEY
+        // ===============================================================
+
+        // ---------- MAPA DDD COMPLETO E PRECISO (BRASIL) ----------
+        const dddMap = {
+            '11': { estado: 'SP', cidade: 'São Paulo' },
+            '12': { estado: 'SP', cidade: 'São José dos Campos' },
+            '13': { estado: 'SP', cidade: 'Santos' },
+            '14': { estado: 'SP', cidade: 'Bauru' },
+            '15': { estado: 'SP', cidade: 'Sorocaba' },
+            '16': { estado: 'SP', cidade: 'Ribeirão Preto' },
+            '17': { estado: 'SP', cidade: 'São José do Rio Preto' },
+            '18': { estado: 'SP', cidade: 'Presidente Prudente' },
+            '19': { estado: 'SP', cidade: 'Campinas' },
+            '21': { estado: 'RJ', cidade: 'Rio de Janeiro' },
+            '22': { estado: 'RJ', cidade: 'Campos dos Goytacazes' },
+            '24': { estado: 'RJ', cidade: 'Volta Redonda' },
+            '27': { estado: 'ES', cidade: 'Vitória' },
+            '28': { estado: 'ES', cidade: 'Cachoeiro de Itapemirim' },
+            '31': { estado: 'MG', cidade: 'Belo Horizonte' },
+            '32': { estado: 'MG', cidade: 'Juiz de Fora' },
+            '33': { estado: 'MG', cidade: 'Governador Valadares' },
+            '34': { estado: 'MG', cidade: 'Uberlândia' },
+            '35': { estado: 'MG', cidade: 'Poços de Caldas' },
+            '37': { estado: 'MG', cidade: 'Divinópolis' },
+            '38': { estado: 'MG', cidade: 'Montes Claros' },
+            '41': { estado: 'PR', cidade: 'Curitiba' },
+            '42': { estado: 'PR', cidade: 'Ponta Grossa' },
+            '43': { estado: 'PR', cidade: 'Londrina' },
+            '44': { estado: 'PR', cidade: 'Maringá' },
+            '45': { estado: 'PR', cidade: 'Foz do Iguaçu' },
+            '46': { estado: 'PR', cidade: 'Francisco Beltrão' },
+            '47': { estado: 'SC', cidade: 'Joinville' },
+            '48': { estado: 'SC', cidade: 'Florianópolis' },
+            '49': { estado: 'SC', cidade: 'Chapecó' },
+            '51': { estado: 'RS', cidade: 'Porto Alegre' },
+            '53': { estado: 'RS', cidade: 'Pelotas' },
+            '54': { estado: 'RS', cidade: 'Caxias do Sul' },
+            '55': { estado: 'RS', cidade: 'Santa Maria' },
+            '61': { estado: 'DF', cidade: 'Brasília' },
+            '62': { estado: 'GO', cidade: 'Goiânia' },
+            '64': { estado: 'GO', cidade: 'Rio Verde' },
+            '65': { estado: 'MT', cidade: 'Cuiabá' },
+            '66': { estado: 'MT', cidade: 'Rondonópolis' },
+            '67': { estado: 'MS', cidade: 'Campo Grande' },
+            '68': { estado: 'AC', cidade: 'Rio Branco' },
+            '69': { estado: 'RO', cidade: 'Porto Velho' },
+            '71': { estado: 'BA', cidade: 'Salvador' },
+            '73': { estado: 'BA', cidade: 'Ilhéus' },
+            '74': { estado: 'BA', cidade: 'Juazeiro' },
+            '75': { estado: 'BA', cidade: 'Feira de Santana' },
+            '77': { estado: 'BA', cidade: 'Barreiras' },
+            '79': { estado: 'SE', cidade: 'Aracaju' },
+            '81': { estado: 'PE', cidade: 'Recife' },
+            '82': { estado: 'AL', cidade: 'Maceió' },
+            '83': { estado: 'PB', cidade: 'João Pessoa' },
+            '84': { estado: 'RN', cidade: 'Natal' },
+            '85': { estado: 'CE', cidade: 'Fortaleza' },
+            '86': { estado: 'PI', cidade: 'Teresina' },
+            '87': { estado: 'PE', cidade: 'Petrolina' },
+            '88': { estado: 'CE', cidade: 'Juazeiro do Norte' },
+            '89': { estado: 'PI', cidade: 'Picos' },
+            '91': { estado: 'PA', cidade: 'Belém' },
+            '92': { estado: 'AM', cidade: 'Manaus' },
+            '93': { estado: 'PA', cidade: 'Santarém' },
+            '94': { estado: 'PA', cidade: 'Marabá' },
+            '95': { estado: 'RR', cidade: 'Boa Vista' },
+            '96': { estado: 'AP', cidade: 'Macapá' },
+            '97': { estado: 'AM', cidade: 'Coari' },
+            '98': { estado: 'MA', cidade: 'São Luís' },
+            '99': { estado: 'MA', cidade: 'Imperatriz' }
+        };
+
+        const carrierMap = {
+            '9': 'Vivo',
+            '6': 'Claro',
+            '7': 'TIM',
+            '8': 'Oi',
+            '3': 'Nextel',
+            '4': 'Algar'
+        };
+
+        // ---------- PLATAFORMAS PARA DORKING (12 links) ----------
+        const socialPlatforms = [
+            { name: 'Instagram', url: 'https://www.google.com/search?q=site:instagram.com+"' },
+            { name: 'Facebook', url: 'https://www.google.com/search?q=site:facebook.com+"' },
+            { name: 'Twitter', url: 'https://www.google.com/search?q=site:twitter.com+"' },
+            { name: 'TikTok', url: 'https://www.google.com/search?q=site:tiktok.com+"' },
+            { name: 'YouTube', url: 'https://www.google.com/search?q=site:youtube.com+"' },
+            { name: 'GitHub', url: 'https://www.google.com/search?q=site:github.com+"' },
+            { name: 'Reddit', url: 'https://www.google.com/search?q=site:reddit.com+"' },
+            { name: 'Pinterest', url: 'https://www.google.com/search?q=site:pinterest.com+"' },
+            { name: 'Tumblr', url: 'https://www.google.com/search?q=site:tumblr.com+"' },
+            { name: 'Snapchat', url: 'https://www.google.com/search?q=site:snapchat.com+"' },
+            { name: 'Telegram', url: 'https://www.google.com/search?q=site:telegram.org+"' },
+            { name: 'LinkedIn', url: 'https://www.google.com/search?q=site:linkedin.com+"' }
+        ];
+
+        const deepDorks = [
+            { label: 'Gov.br', url: 'https://www.gov.br/' },
+            { label: 'Diário Oficial', url: 'https://www.in.gov.br/' },
+            { label: 'Justiça Eleitoral', url: 'https://www.tse.jus.br/' }
+        ];
+
+        // NOVOS LINKS DE BUSCA PARA TELEFONE (SEM RECLAME AQUI)
+        const phoneSearchUrls = [
+            { label: 'Consulta Telefônica', url: 'https://www.telefonica.com.br/' },
+            { label: 'Anatel', url: 'https://www.anatel.gov.br/' },
+            { label: 'Lista Telefônica', url: 'https://www.listatelefonica.com/' },
+            { label: 'Infoseg (Sinesp)', url: 'https://www.sinesp.gov.br/' },
+            { label: 'Whitepages', url: 'https://www.whitepages.com/' },
+            { label: 'Truecaller', url: 'https://www.truecaller.com/' }
+        ];
+
+        // ---------- FUNÇÕES AUXILIARES ----------
+        function limparInput(input) {
+            // Remove tudo que não é dígito, exceto o sinal de '+'
+            let cleaned = input.replace(/[^\d+]/g, '');
+            // Se começar com +55, remove
+            if (cleaned.startsWith('+55')) {
+                cleaned = cleaned.substring(3);
+            }
+            // Se começar com 55 (sem +), remove também
+            if (cleaned.startsWith('55') && cleaned.length > 2) {
+                cleaned = cleaned.substring(2);
+            }
+            return cleaned;
+        }
+
+        // ---------- LIMPEZA DE CACHES ----------
+        function limparCaches(modulePrefix) {
+            const caches = [
+                document.getElementById(`${modulePrefix}-cache1`),
+                document.getElementById(`${modulePrefix}-cache2`),
+                document.getElementById(`${modulePrefix}-cache3`)
+            ];
+            caches.forEach(cache => {
+                if (cache) {
+                    cache.classList.add('hidden-cache');
+                    const lists = cache.querySelectorAll('.data-list');
+                    lists.forEach(list => { list.innerHTML = ''; });
+                    const values = cache.querySelectorAll('.data-value:not(.data-list)');
+                    values.forEach(el => { el.textContent = ''; });
+                }
+            });
+            const area = document.getElementById(`${modulePrefix}-data`);
+            if (area) area.classList.remove('visible');
+        }
+
+        function mostrarCache(modulePrefix, cacheIndex) {
+            const container = document.getElementById(`${modulePrefix}-cache${cacheIndex}`);
+            if (container) container.classList.remove('hidden-cache');
+        }
+
+        function esconderCache(modulePrefix, cacheIndex) {
+            const container = document.getElementById(`${modulePrefix}-cache${cacheIndex}`);
+            if (container) container.classList.add('hidden-cache');
+        }
+
+        // ---------- CRIAÇÃO DE LISTAS COM createElement ----------
+        function criarListaSocial(platforms, input) {
+            const ul = document.createElement('ul');
+            platforms.forEach(p => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = `${p.url}${encodeURIComponent(input)}"`;
+                a.textContent = p.name;
+                a.target = '_blank';
+                a.style.display = 'block';
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        function criarListaDeep(dorks, input) {
+            const ul = document.createElement('ul');
+            dorks.forEach(item => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = item.url + encodeURIComponent(input);
+                a.textContent = item.label;
+                a.target = '_blank';
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        function criarListaPhone(links, input) {
+            const ul = document.createElement('ul');
+            links.forEach(item => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = item.url + encodeURIComponent(input);
+                a.textContent = item.label;
+                a.target = '_blank';
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        // ---------- MASTER KEY: DADOS MOCK ----------
+        function preencherDadosDeTeste(module) {
+            if (module === 'name') {
+                const socialContainer = document.getElementById('name-social');
+                socialContainer.innerHTML = '';
+                const ul = document.createElement('ul');
+                const mockPlatforms = ['Instagram', 'Facebook', 'LinkedIn', 'Twitter', 'TikTok', 'YouTube', 'GitHub', 'Reddit', 'Pinterest', 'Tumblr', 'Snapchat', 'Telegram'];
+                mockPlatforms.forEach(p => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `https://${p.toLowerCase()}.com/mock_user`;
+                    a.textContent = p;
+                    a.target = '_blank';
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+                socialContainer.appendChild(ul);
+                mostrarCache('name', 1);
+                document.getElementById('name-identity').textContent = 'Mock: Usuário encontrado em 12 bases';
+                mostrarCache('name', 2);
+                const deepContainer = document.getElementById('name-deep');
+                deepContainer.innerHTML = '';
+                const ulDeep = document.createElement('ul');
+                const deepItems = ['Gov.br', 'Diário Oficial', 'Justiça Eleitoral'];
+                deepItems.forEach(item => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `https://www.google.com/search?q=${item}+mock`;
+                    a.textContent = item;
+                    a.target = '_blank';
+                    li.appendChild(a);
+                    ulDeep.appendChild(li);
+                });
+                deepContainer.appendChild(ulDeep);
+                mostrarCache('name', 3);
+                document.getElementById('name-data').classList.add('visible');
+            } else if (module === 'number') {
+                // Dados mock para telefone
+                document.getElementById('phone-country').textContent = 'Brasil';
+                document.getElementById('phone-state').textContent = 'SP';
+                document.getElementById('phone-city').textContent = 'São Paulo';
+                document.getElementById('phone-carrier').textContent = 'Vivo';
+                document.getElementById('phone-type').textContent = 'Móvel';
+                document.getElementById('phone-ddd').textContent = '11';
+                document.getElementById('phone-prefix').textContent = '99999';
+                const mapsLink = document.createElement('a');
+                mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=São+Paulo+SP';
+                mapsLink.textContent = 'Abrir no Google Maps';
+                mapsLink.target = '_blank';
+                document.getElementById('phone-maps').innerHTML = '';
+                document.getElementById('phone-maps').appendChild(mapsLink);
+                mostrarCache('phone', 2);
+
+                const linksContainer = document.getElementById('phone-links');
+                linksContainer.innerHTML = '';
+                const ul = document.createElement('ul');
+                const phoneLinks = ['Consulta Telefônica', 'Anatel', 'Lista Telefônica', 'Infoseg (Sinesp)', 'Whitepages', 'Truecaller'];
+                phoneLinks.forEach(label => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `https://example.com/search?q=${label}`;
+                    a.textContent = label;
+                    a.target = '_blank';
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+                linksContainer.appendChild(ul);
+                mostrarCache('phone', 1);
+
+                document.getElementById('phone-portability').textContent = 'Sim';
+                document.getElementById('phone-regdate').textContent = '2023-01-01';
+                document.getElementById('phone-score').textContent = 'Alta';
+                mostrarCache('phone', 3);
+
+                document.getElementById('phone-data').classList.add('visible');
+            } else if (module === 'idip') {
+                document.getElementById('ip-isp').textContent = 'Mock ISP';
+                document.getElementById('ip-asn').textContent = 'AS12345';
+                document.getElementById('ip-geo').textContent = 'Mock City, BR';
+                document.getElementById('ip-blacklist').textContent = 'Não listado';
+                mostrarCache('ip', 1);
+                esconderCache('ip', 2);
+                esconderCache('ip', 3);
+                document.getElementById('ip-data').classList.add('visible');
+            }
+        }
+
+        // ===============================================================
+        //  PROCESSAMENTO DOS MÓDULOS
+        // ===============================================================
+
+        function processName(input) {
+            const raw = input.trim();
+            limparCaches('name');
+            if (raw.toUpperCase() === 'MR') { preencherDadosDeTeste('name'); return; }
+            const socialContainer = document.getElementById('name-social');
+            socialContainer.innerHTML = '';
+            const socialList = criarListaSocial(socialPlatforms, raw || '');
+            socialContainer.appendChild(socialList);
+            mostrarCache('name', 1);
+            document.getElementById('name-identity').textContent = '';
+            esconderCache('name', 2);
+            const deepContainer = document.getElementById('name-deep');
+            deepContainer.innerHTML = '';
+            const deepList = criarListaDeep(deepDorks, raw || '');
+            deepContainer.appendChild(deepList);
+            mostrarCache('name', 3);
+            document.getElementById('name-data').classList.add('visible');
+        }
+
+        function processPhone(input) {
+            const raw = input.trim();
+            limparCaches('phone');
+            if (raw.toUpperCase() === 'MR') { preencherDadosDeTeste('number'); return; }
+
+            // Limpeza: remove +55, espaços, parênteses, traços, etc.
+            const cleaned = limparInput(raw);
+            // Agora extrai DDD (2 primeiros dígitos)
+            const ddd = cleaned.length >= 2 ? cleaned.substring(0, 2) : '';
+            const rest = cleaned.length > 2 ? cleaned.substring(2) : '';
+            const prefix = rest.length >= 4 ? rest.substring(0, 4) : rest;
+
+            // Determina país
+            const country = 'Brasil';
+
+            // Busca dados do DDD
+            const dddInfo = dddMap[ddd] || null;
+            const state = dddInfo ? dddInfo.estado : '';
+            const city = dddInfo ? dddInfo.cidade : '';
+
+            // Tipo de linha
+            let tipo = '';
+            if (cleaned.length === 11) tipo = 'Móvel';
+            else if (cleaned.length === 10) tipo = 'Fixo';
+            else if (cleaned.length > 0) tipo = 'Desconhecido';
+
+            // Operadora
+            let carrier = '';
+            if (prefix.length > 0) {
+                const firstDigit = prefix.charAt(0);
+                carrier = carrierMap[firstDigit] || '';
+            }
+
+            // Preenche campos
+            document.getElementById('phone-country').textContent = country;
+            document.getElementById('phone-state').textContent = state;
+            document.getElementById('phone-city').textContent = city;
+            document.getElementById('phone-carrier').textContent = carrier || '';
+            document.getElementById('phone-type').textContent = tipo || '';
+            document.getElementById('phone-ddd').textContent = ddd || '';
+            document.getElementById('phone-prefix').textContent = prefix || '';
+
+            // Gera link do Google Maps
+            const mapsContainer = document.getElementById('phone-maps');
+            mapsContainer.innerHTML = '';
+            if (city && state) {
+                const mapsLink = document.createElement('a');
+                const query = `${city}+${state}`;
+                mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                mapsLink.textContent = 'Abrir no Google Maps';
+                mapsLink.target = '_blank';
+                mapsContainer.appendChild(mapsLink);
+            } else {
+                mapsContainer.textContent = '';
+            }
+
+            // Exibe cache2 se houver pelo menos DDD ou região
+            const hasMeta = ddd || city || state || carrier || tipo;
+            if (hasMeta) {
+                mostrarCache('phone', 2);
+            } else {
+                esconderCache('phone', 2);
+            }
+
+            // Cache 1: Links de busca (sempre exibe, independente da validação)
+            const linksContainer = document.getElementById('phone-links');
+            linksContainer.innerHTML = '';
+            const phoneList = criarListaPhone(phoneSearchUrls, raw);
+            linksContainer.appendChild(phoneList);
+            mostrarCache('phone', 1);
+
+            // Cache 3: oculto (sem dados)
+            document.getElementById('phone-portability').textContent = '';
+            document.getElementById('phone-regdate').textContent = '';
+            document.getElementById('phone-score').textContent = '';
+            esconderCache('phone', 3);
+
+            document.getElementById('phone-data').classList.add('visible');
+        }
+
+        function processIP(input) {
+            const raw = input.trim();
+            limparCaches('ip');
+            if (raw.toUpperCase() === 'MR') { preencherDadosDeTeste('idip'); return; }
+            const parts = raw.split('.');
+            if (parts.length === 4 && parts.every(p => !isNaN(p) && Number(p) >= 0 && Number(p) <= 255)) {
+                document.getElementById('ip-isp').textContent = '';
+                document.getElementById('ip-asn').textContent = '';
+                document.getElementById('ip-geo').textContent = '';
+                document.getElementById('ip-blacklist').textContent = '';
+                esconderCache('ip', 1);
+            } else {
+                document.getElementById('ip-isp').textContent = '';
+                document.getElementById('ip-asn').textContent = '';
+                document.getElementById('ip-geo').textContent = '';
+                document.getElementById('ip-blacklist').textContent = '';
+                esconderCache('ip', 1);
+            }
+            esconderCache('ip', 2);
+            esconderCache('ip', 3);
+            document.getElementById('ip-data').classList.add('visible');
+        }
+
+        // ===============================================================
+        //  AÇÕES DE BUSCA
+        // ===============================================================
+        function setupSearchActions() {
+            const btns = document.querySelectorAll('.search-action');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const module = btn.getAttribute('data-module');
+                    if (module === 'name') {
+                        processName(document.getElementById('nameInput').value);
+                    } else if (module === 'number') {
+                        processPhone(document.getElementById('numberInput').value);
+                    } else if (module === 'idip') {
+                        processIP(document.getElementById('ipInput').value);
+                    }
+                    let hookId = '';
+                    if (module === 'name') hookId = 'hook-name';
+                    else if (module === 'number') hookId = 'hook-number';
+                    else if (module === 'idip') hookId = 'hook-id-ip';
+                    const hookDiv = document.getElementById(hookId);
+                    if (hookDiv) {
+                        hookDiv.innerHTML = '[ intelligence hook ] ready for ollama/python backend';
+                        setTimeout(() => { hookDiv.innerHTML = '<!-- Ponto de injeção de inteligência local (backend/Ollama) -->'; }, 2000);
+                    }
+                });
+            });
+        }
+
+        // ===============================================================
+        //  ANIMAÇÕES DE ENTRADA (SCROLL)
+        // ===============================================================
+        let observer = null;
+        function observeModules() {
+            if (observer) observer.disconnect();
+            const elements = document.querySelectorAll('[data-animate], .glow-panel, .search-module');
+            observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: "0px 0px -30px 0px" });
+            elements.forEach(el => observer.observe(el));
+        }
+
+        function setupDashboardObserver() {
+            const dash = document.getElementById('dashboardMain');
+            if (!dash) return;
+            const watchDisplay = new MutationObserver((mutations) => {
+                if (dash.style.display === 'block') {
+                    observeModules();
+                    watchDisplay.disconnect();
+                }
+            });
+            watchDisplay.observe(dash, { attributes: true, attributeFilter: ['style'] });
+        }
+
+        // ===============================================================
+        //  INICIALIZAÇÃO
+        // ===============================================================
+        function init() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('dashboardMain').style.display = 'none';
+            startIntro();
+            setupAuth();
+            setupSearchActions();
+            const menuBtn = document.getElementById('menuTrigger');
+            if (menuBtn) menuBtn.addEventListener('click', showMenuModal);
+            setTheme('dark');
+            applyLanguage();
+            setupDashboardObserver();
+            setTimeout(() => {
+                if (document.getElementById('dashboardMain').style.display === 'block') observeModules();
+            }, 300);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
